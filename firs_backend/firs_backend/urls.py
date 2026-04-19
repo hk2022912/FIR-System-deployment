@@ -18,7 +18,12 @@ from django.contrib import admin
 
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from api.views import login_view, logout_view, bulk_import, IncidentViewSet
+
+
+from api.views import (
+    login_view, logout_view, bulk_import, IncidentViewSet,
+    forgot_password, reset_password,          # ← add these
+)
 
 router = DefaultRouter()
 router.register(r'incidents', IncidentViewSet, basename='incident')
@@ -29,4 +34,9 @@ urlpatterns = [
     path('api/logout/', logout_view),
     path('api/incidents/bulk/', bulk_import),
     path('api/', include(router.urls)),
+
+
+    path('api/forgot-password/', forgot_password),   # ← new
+    path('api/reset-password/', reset_password),    # ← new
+
 ]

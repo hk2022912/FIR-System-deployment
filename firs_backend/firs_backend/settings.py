@@ -159,3 +159,17 @@ CORS_ALLOW_HEADERS = [
     "x-csrftoken",
     "x-requested-with",
 ]
+
+
+# ── Email / SMTP ──────────────────────────────────────────────
+EMAIL_BACKEND       = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST          = 'smtp.gmail.com'
+EMAIL_PORT          = 587
+EMAIL_USE_TLS       = True
+EMAIL_HOST_USER     = 'xola050124@gmail.com'      # ← change this
+EMAIL_HOST_PASSWORD = 'iyyrmngbouulclud'    # ← change this (App Password, not your real password)
+DEFAULT_FROM_EMAIL  = EMAIL_HOST_USER
+
+PASSWORD_RESET_TIMEOUT = 120   # link expires in 1 hour (seconds)
+FRONTEND_URL = 'http://localhost:5173'  # ← change in production
+
