@@ -15,28 +15,26 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 
-
 from api.views import (
     login_view, logout_view, bulk_import, IncidentViewSet,
-    forgot_password, reset_password,          # ← add these
+    forgot_password, verify_otp, reset_password,
 )
 
 router = DefaultRouter()
 router.register(r'incidents', IncidentViewSet, basename='incident')
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('api/login/',  login_view),
-    path('api/logout/', logout_view),
-    path('api/incidents/bulk/', bulk_import),
-    path('api/', include(router.urls)),
+    path('admin/',                  admin.site.urls),
+    path('api/login/',              login_view),
+    path('api/logout/',             logout_view),
+    path('api/incidents/bulk/',     bulk_import),
+    path('api/',                    include(router.urls)),
 
-
-    path('api/forgot-password/', forgot_password),   # ← new
-    path('api/reset-password/', reset_password),    # ← new
-
+    # Password reset OTP flow
+    path('api/forgot-password/',    forgot_password),
+    path('api/verify-otp/',         verify_otp),
+    path('api/reset-password/',     reset_password),
 ]

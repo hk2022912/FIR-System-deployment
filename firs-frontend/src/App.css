@@ -182,3 +182,32 @@
     border-right-color: var(--border);
   }
 }
+
+/* OTP Input */
+.otp-row {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 20px;
+}
+.otp-box {
+  width: 48px;
+  height: 56px;
+  text-align: center;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--navy);
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  background: #fafbfd;
+  outline: none;
+  transition: border-color .15s, box-shadow .15s;
+  caret-color: transparent;
+}
+.otp-box:focus {
+  border-color: var(--navy-3);
+  box-shadow: 0 0 0 3px rgba(30,77,140,.1);
+  background: white;
+}
+

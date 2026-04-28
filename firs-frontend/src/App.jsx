@@ -1,4 +1,3 @@
-
 import './App.css'
 
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -394,61 +393,232 @@ function LoginPage({ onLogin, onForgot }) {
             {loading ? "Signing in…" : "Sign In"}
           </button>
         </div>
-        <div className="auth-footer">
-          Manage accounts via Django Admin at <strong>localhost:8000/admin</strong>
-        </div>
       </div>
     </div>
   );
 }
 
-/* ─── FORGOT PASSWORD PAGE ────────────────────────────────────────────────── */
+/* ─── FORGOT PASSWORD PAGE (3-step: Email → OTP → Reset) ─────────────────── */
 function ForgotPage({ onBack }) {
-  const [email, setEmail] = useState("");
-  const [user, setUser]   = useState("");
-  const [err, setErr]     = useState("");
-  const [sent, setSent]   = useState(false);
+  const [step, setStep]           = useState("email");
+  const [email, setEmail]         = useState("");
+  const [otp, setOtp]             = useState(["","","","","",""]);
+  const [newPass, setNewPass]     = useState("");
+  const [confirmPass, setConfirm] = useState("");
+  const [showPw, setShowPw]       = useState(false);
+  const [showCPw, setShowCPw]     = useState(false);
+  const [err, setErr]             = useState("");
+  const [loading, setLoading]     = useState(false);
+  const [success, setSuccess]     = useState(false);
+  const otpRefs = useRef([]);
 
-  function doForgot() {
+  /* ── Step 1: Send OTP ── */
+  async function doSendOtp() {
     setErr("");
-    if (!email || !user) { setErr("Please fill in both fields."); return; }
-    setSent(true);
+    if (!email.trim()) { setErr("Please enter your email address."); return; }
+    setLoading(true);
+    try {
+      const res  = await fetch(`${API_BASE}/forgot-password/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setErr(data.message || "Email not found."); return; }  // ← fix: check res.ok
+      setStep("otp");
+    } catch {
+      setErr("Cannot connect to server. Make sure Django is running.");
+    } finally {
+      setLoading(false);
+    }
   }
 
-  return (
+  /* ── Step 2: Verify OTP ── */
+  async function doVerifyOtp() {
+    setErr("");
+    const code = otp.join("");
+    if (code.length < 6) { setErr("Please enter the full 6-digit code."); return; }
+    setLoading(true);
+    try {
+      const res  = await fetch(`${API_BASE}/verify-otp/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, otp: code }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setErr(data.message || "Invalid or expired OTP."); return; }  // ← fix: data.message not data.error
+      setStep("reset");
+    } catch {
+      setErr("Cannot connect to server.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  /* ── Step 3: Reset Password ── */
+  async function doResetPassword() {
+    setErr("");
+    if (!newPass || !confirmPass) { setErr("Please fill in both password fields."); return; }
+    if (newPass.length < 8)       { setErr("Password must be at least 8 characters."); return; }
+    if (newPass !== confirmPass)   { setErr("Passwords do not match."); return; }
+    setLoading(true);
+    try {
+      const res  = await fetch(`${API_BASE}/reset-password/`, {   // ← fix: correct endpoint
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          otp:              otp.join(""),
+          new_password:     newPass,
+          confirm_password: confirmPass,   // ← fix: required by backend
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setErr(data.message || "Failed to reset password."); return; }  // ← fix: data.message
+      setSuccess(true);
+    } catch {
+      setErr("Cannot connect to server.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  /* ── OTP input helpers ── */
+  function handleOtpChange(val, idx) {
+    const cleaned = val.replace(/\D/g, "").slice(-1);
+    const next = [...otp]; next[idx] = cleaned; setOtp(next);
+    if (cleaned && idx < 5) otpRefs.current[idx + 1]?.focus();
+  }
+  function handleOtpKey(e, idx) {
+    if (e.key === "Backspace" && !otp[idx] && idx > 0) otpRefs.current[idx - 1]?.focus();
+  }
+  function handleOtpPaste(e) {
+    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+    if (pasted) {
+      setOtp(pasted.split("").concat(Array(6).fill("")).slice(0, 6));
+      otpRefs.current[Math.min(pasted.length, 5)]?.focus();
+      e.preventDefault();
+    }
+  }
+
+  const Header = () => (
+    <div className="auth-header">
+      <div className="auth-brand-icon">
+        <img src="/BFP logo.svg" alt="BFP Logo" width="40" height="40" />
+      </div>
+      <h1>FIRS — Fire Incident Recording System</h1>
+      <p>Bureau of Fire Protection · Cagayan de Oro City</p>
+    </div>
+  );
+
+  /* ── STEP 1: Email ── */
+  if (step === "email") return (
     <div className="auth-wrap">
       <div className="auth-card">
-        <div className="auth-header">
-
-          <div className="auth-brand-icon">
-            <img src="/BFP logo.png" alt="BFP Logo" width="40" height="40" />
-          </div>
-
-          <h1>FIRS — Fire Incident Recording System</h1>
-          <p>Bureau of Fire Protection · Cagayan de Oro City</p>
-        </div>
+        <Header />
         <div className="auth-body">
           <button className="auth-back" onClick={onBack}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
             Back to Sign In
           </button>
-          <h2>Reset Password</h2>
-          <p className="auth-sub">Contact your BFP system administrator to reset your password via Django Admin.</p>
+          <h2>Forgot Password</h2>
+          <p className="auth-sub">Enter your registered BFP email address and we'll send a verification code.</p>
           {err && <div className="auth-err">{err}</div>}
-          {sent && <div className="auth-success">Request submitted. Please contact your administrator.</div>}
-          <div style={sent ? {opacity:.4,pointerEvents:"none"} : {}}>
-            <div className="auth-fg">
-              <label>Email Address</label>
-              <input type="email" placeholder="Enter your registered email" value={email} onChange={e => setEmail(e.target.value)} />
-            </div>
-            <div className="auth-fg">
-              <label>Username</label>
-              <input type="text" placeholder="Enter your username" value={user} onChange={e => setUser(e.target.value)} onKeyDown={e => e.key === "Enter" && doForgot()} />
-            </div>
-            <button className="auth-btn" style={{marginTop:10}} onClick={doForgot}>Send Reset Request</button>
+          <div className="auth-fg">
+            <label>Email Address</label>
+            <input type="email" placeholder="Enter your registered email"
+              value={email} onChange={e => setEmail(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && doSendOtp()} autoFocus />
+          </div>
+          <button className="auth-btn" onClick={doSendOtp} disabled={loading} style={{marginTop:8}}>
+            {loading ? "Sending…" : "Send Verification Code"}
+          </button>
+        </div>
+        <div className="auth-footer">You'll receive a 6-digit code valid for <strong>10 minutes</strong>.</div>
+      </div>
+    </div>
+  );
+
+  /* ── STEP 2: OTP ── */
+  if (step === "otp") return (
+    <div className="auth-wrap">
+      <div className="auth-card">
+        <Header />
+        <div className="auth-body">
+          <button className="auth-back" onClick={() => { setStep("email"); setErr(""); setOtp(["","","","","",""]); }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+            Back
+          </button>
+          <h2>Enter Verification Code</h2>
+          <p className="auth-sub">A 6-digit code was sent to <strong style={{color:"var(--navy)"}}>{email}</strong>. Check your inbox.</p>
+          {err && <div className="auth-err">{err}</div>}
+          <div className="otp-row">
+            {otp.map((digit, idx) => (
+              <input key={idx} type="text" inputMode="numeric" maxLength={1}
+                className="otp-box" value={digit}
+                ref={el => otpRefs.current[idx] = el}
+                onChange={e => handleOtpChange(e.target.value, idx)}
+                onKeyDown={e => handleOtpKey(e, idx)}
+                onPaste={idx === 0 ? handleOtpPaste : undefined}
+                autoFocus={idx === 0} />
+            ))}
+          </div>
+          <button className="auth-btn" onClick={doVerifyOtp} disabled={loading} style={{marginTop:20}}>
+            {loading ? "Verifying…" : "Verify Code"}
+          </button>
+          <div style={{textAlign:"center",marginTop:14}}>
+            <button className="auth-link" onClick={doSendOtp} disabled={loading}>Resend code</button>
           </div>
         </div>
-        <div className="auth-footer">Contact your BFP system administrator if you need further assistance.</div>
+        <div className="auth-footer">Didn't receive it? Check your spam folder or <strong>resend</strong>.</div>
+      </div>
+    </div>
+  );
+
+  /* ── STEP 3: New Password ── */
+  return (
+    <div className="auth-wrap">
+      <div className="auth-card">
+        <Header />
+        <div className="auth-body">
+          {!success ? (
+            <>
+              <h2>Set New Password</h2>
+              <p className="auth-sub">Choose a strong password for your BFP account.</p>
+              {err && <div className="auth-err">{err}</div>}
+              <div className="auth-fg pw">
+                <label>New Password</label>
+                <input type={showPw ? "text" : "password"} placeholder="At least 8 characters"
+                  value={newPass} onChange={e => setNewPass(e.target.value)} />
+                <button className="pw-toggle" onClick={() => setShowPw(!showPw)} type="button" tabIndex={-1}>
+                  {showPw ? <EyeOffIcon /> : <EyeIcon />}
+                </button>
+              </div>
+              <div className="auth-fg pw">
+                <label>Confirm Password</label>
+                <input type={showCPw ? "text" : "password"} placeholder="Repeat new password"
+                  value={confirmPass} onChange={e => setConfirm(e.target.value)}
+                  onKeyDown={e => e.key === "Enter" && doResetPassword()} />
+                <button className="pw-toggle" onClick={() => setShowCPw(!showCPw)} type="button" tabIndex={-1}>
+                  {showCPw ? <EyeOffIcon /> : <EyeIcon />}
+                </button>
+              </div>
+              <button className="auth-btn" onClick={doResetPassword} disabled={loading} style={{marginTop:8}}>
+                {loading ? "Updating…" : "Reset Password"}
+              </button>
+            </>
+          ) : (
+            <div style={{textAlign:"center",padding:"20px 0"}}>
+              <div style={{width:56,height:56,background:"var(--green-soft)",borderRadius:"50%",display:"grid",placeItems:"center",margin:"0 auto 16px"}}>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#12804a" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+              <h2 style={{marginBottom:8}}>Password Updated!</h2>
+              <p className="auth-sub">Your password has been reset successfully.</p>
+              <button className="auth-btn" onClick={onBack} style={{marginTop:20}}>Back to Sign In</button>
+            </div>
+          )}
+        </div>
+        {!success && <div className="auth-footer">Password must be at least <strong>8 characters</strong>.</div>}
       </div>
     </div>
   );
