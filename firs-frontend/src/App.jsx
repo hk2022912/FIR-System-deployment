@@ -360,7 +360,7 @@ function LoginPage({ onLogin, onForgot }) {
         <div className="auth-header">
 
         <div className="auth-brand-icon">
-          <img src="/BFP logo.svg" alt="BFP Logo" width="40" height="40" />
+          <img src="/FIRS-LOGO.png" alt="BFP Logo" width="40" height="40" />
         </div>
 
           <h1>FIRS — Fire Incident Recording System</h1>
@@ -504,7 +504,7 @@ function ForgotPage({ onBack }) {
   const Header = () => (
     <div className="auth-header">
       <div className="auth-brand-icon">
-        <img src="/BFP logo.svg" alt="BFP Logo" width="40" height="40" />
+        <img src="/FIRS-LOGO.png" alt="BFP Logo" width="40" height="40" />
       </div>
       <h1>FIRS — Fire Incident Recording System</h1>
       <p>Bureau of Fire Protection · Cagayan de Oro City</p>
@@ -1388,7 +1388,7 @@ export default function App() {
           <div className="topbar-brand">
   
   <div className="brand-icon">
-  <img src="/BFP logo.svg" alt="BFP Logo" width="32" height="32" />
+  <img src="/FIRS-LOGO.png" alt="BFP Logo" width="32" height="32" />
 </div>
 
           <div>
