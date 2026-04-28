@@ -145,7 +145,10 @@ REST_FRAMEWORK = {
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:5173',  # Vite
     'http://localhost:3000',  # CRA
+    'https://fir-system-azure.vercel.app',
+    'https://fir-system-l38fzdwjx-hk2022912s-projects.vercel.app',
 ]
+
 CORS_ALLOW_CREDENTIALS = True
 
 # CORS — allow React dev server
@@ -172,5 +175,5 @@ EMAIL_HOST_PASSWORD = 'aotnebxrdhlinrvo'    # ← change this (App Password, not
 DEFAULT_FROM_EMAIL  = EMAIL_HOST_USER
 
 PASSWORD_RESET_TIMEOUT = 120   # link expires in 1 hour (seconds)
-FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost:5173')  # ← change in production
+FRONTEND_URL = os.environ.get('FRONTEND_URL', 'https://fir-system-azure.vercel.app')
 
