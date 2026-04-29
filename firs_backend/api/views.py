@@ -1,3 +1,4 @@
+import logging
 from django.shortcuts import render
 from django.utils import timezone
 from django.utils.crypto import get_random_string
@@ -16,6 +17,8 @@ from django.contrib.auth import authenticate
 
 from .models import Incident, PasswordResetOTP
 from .serializers import IncidentSerializer
+
+logger = logging.getLogger(__name__)
 
 
 # ── AUTH ──────────────────────────────────────────────────────────────────────
@@ -106,20 +109,27 @@ def forgot_password(request):
     PasswordResetOTP.objects.filter(user=user).delete()
     PasswordResetOTP.objects.create(user=user, otp=otp)
 
-    send_mail(
-        subject='FIRS — Your Password Reset Code',
-        message=(
-            f"Hello {user.get_full_name() or user.username},\n\n"
-            f"Your verification code for the Fire Incident Recording System is:\n\n"
-            f"  {otp}\n\n"
-            f"This code expires in 10 minutes. Do not share it with anyone.\n\n"
-            f"If you did not request this, you can safely ignore this email.\n\n"
-            f"— FIRS System, Bureau of Fire Protection CDO"
-        ),
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[user.email],
-        fail_silently=False,
-    )
+    try:
+        send_mail(
+            subject='FIRS — Your Password Reset Code',
+            message=(
+                f"Hello {user.get_full_name() or user.username},\n\n"
+                f"Your verification code for the Fire Incident Recording System is:\n\n"
+                f"  {otp}\n\n"
+                f"This code expires in 10 minutes. Do not share it with anyone.\n\n"
+                f"If you did not request this, you can safely ignore this email.\n\n"
+                f"— FIRS System, Bureau of Fire Protection CDO"
+            ),
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[user.email],
+            fail_silently=False,
+        )
+    except Exception as e:
+        logger.error(f"Failed to send OTP email to {user.email}: {e}")
+        return Response(
+            {'message': 'Failed to send OTP. Please try again later.'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
 
     return Response({'message': 'OTP sent to your email.'}, status=status.HTTP_200_OK)
 
@@ -199,4 +209,3 @@ def reset_password(request):
     record.delete()
 
     return Response({'message': 'Password reset successful.'}, status=status.HTTP_200_OK)
-
