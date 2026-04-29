@@ -143,11 +143,11 @@ REST_FRAMEWORK = {
 
 # Allow React dev server to talk to Django
 CORS_ALLOWED_ORIGINS = [
-    'http://localhost:5173',  # Vite
-    'http://localhost:3000',  # CRA
+    'http://localhost:5173',
+    'http://localhost:3000',
     'https://fir-system-azure.vercel.app',
-    'https://fir-system-deployment.vercel.app',                          # ← add this
-    'https://fir-system-deployment-96mxcsodp-hk2022912s-projects.vercel.app', 
+    'https://fir-system-deployment.vercel.app',  # ← add this
+    'https://fir-system-deployment-96mxcsodp-hk2022912s-projects.vercel.app',  # ← add this
 ]
 
 CORS_ALLOW_CREDENTIALS = True
