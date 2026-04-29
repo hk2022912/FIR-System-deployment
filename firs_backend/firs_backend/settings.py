@@ -146,7 +146,8 @@ CORS_ALLOWED_ORIGINS = [
     'http://localhost:5173',  # Vite
     'http://localhost:3000',  # CRA
     'https://fir-system-azure.vercel.app',
-    'https://fir-system-8ledgpmou-hk2022912s-projects.vercel.app',
+    'https://fir-system-deployment.vercel.app',                          # ← add this
+    'https://fir-system-deployment-96mxcsodp-hk2022912s-projects.vercel.app', 
 ]
 
 CORS_ALLOW_CREDENTIALS = True
