@@ -199,3 +199,4 @@ def reset_password(request):
     record.delete()
 
     return Response({'message': 'Password reset successful.'}, status=status.HTTP_200_OK)
+
