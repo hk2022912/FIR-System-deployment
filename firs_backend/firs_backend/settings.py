@@ -136,7 +136,7 @@ CORS_ALLOW_HEADERS = [
     'origin',
     'x-csrftoken',
     'x-requested-with',
-]
+] 
 
 # ✅ CSRF trusted origins
 CSRF_TRUSTED_ORIGINS = [
