@@ -4,8 +4,10 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import "./index.css";
 
 /* ─── CONFIG ──────────────────────────────────────────────────────────────── */
-const API_BASE = import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api` : "/api";
-
+export const API_BASE = import.meta.env.VITE_API_URL 
+  ? `${import.meta.env.VITE_API_URL}/api` 
+  : "http://localhost:8000/api";   // ← Change this if your Django port is different
+  
 function authHeaders(token) {
   return { "Content-Type": "application/json", Authorization: `Token ${token}` };
 }
