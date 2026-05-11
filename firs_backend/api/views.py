@@ -6,6 +6,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.views.decorators.csrf import csrf_exempt
 from datetime import timedelta
+from django.db import connection
 
 from rest_framework import viewsets, status
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
@@ -79,6 +80,26 @@ def bulk_import(request):
     return Response({'imported': len(created)}, status=status.HTTP_201_CREATED)
 
 
+# ── RESET INCIDENT SEQUENCE ───────────────────────────────────────────────────
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def reset_incident_sequence(request):
+    """
+    Deletes ALL incidents and resets the SQLite auto-increment ID back to 1.
+    WARNING: This permanently deletes all incident records.
+    """
+    Incident.objects.all().delete()
+
+    with connection.cursor() as cursor:
+        cursor.execute("DELETE FROM sqlite_sequence WHERE name='api_incident';")  # ← fixed table name
+
+    return Response(
+        {'message': 'All incidents deleted and ID reset to 1.'},
+        status=status.HTTP_200_OK
+    )
+
+
 # ── PASSWORD RESET (OTP FLOW) ─────────────────────────────────────────────────
 
 @csrf_exempt
@@ -102,7 +123,6 @@ def forgot_password(request):
 
     otp = get_random_string(length=6, allowed_chars='0123456789')
 
-    # Delete any existing OTP for this user, then create a fresh one
     PasswordResetOTP.objects.filter(user=user).delete()
     PasswordResetOTP.objects.create(user=user, otp=otp)
 
@@ -184,7 +204,6 @@ def reset_password(request):
     except (User.DoesNotExist, PasswordResetOTP.DoesNotExist):
         return Response({'message': 'Invalid request.'}, status=status.HTTP_400_BAD_REQUEST)
 
-    # Re-validate OTP one final time before committing
     if timezone.now() - record.created_at > timedelta(minutes=10):
         record.delete()
         return Response({'message': 'OTP expired. Please request a new one.'}, status=status.HTTP_400_BAD_REQUEST)
@@ -192,11 +211,9 @@ def reset_password(request):
     if record.otp != otp:
         return Response({'message': 'Invalid OTP.'}, status=status.HTTP_400_BAD_REQUEST)
 
-    # All good — reset password, kick existing sessions, delete OTP
     user.set_password(new_password)
     user.save()
     Token.objects.filter(user=user).delete()
     record.delete()
 
     return Response({'message': 'Password reset successful.'}, status=status.HTTP_200_OK)
-

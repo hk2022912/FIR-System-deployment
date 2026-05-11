@@ -6,12 +6,6 @@ import './App.css'
 import { useState, useEffect, useRef, useCallback } from "react";
 import "./index.css";
 
-/* ─── CONFIG ──────────────────────────────────────────────────────────────── */
-const API_BASE = "/api";
-
-function authHeaders(token) {
-  return { "Content-Type": "application/json", Authorization: `Token ${token}` };
-}
 
 /* ─── CONSTANTS ───────────────────────────────────────────────────────────── */
 const PAGE_SIZE = 10;
@@ -328,125 +322,6 @@ function ConfirmDialog({ open, title, msg, onOk, onCancel }) {
   );
 }
 
-/* ─── LOGIN PAGE ──────────────────────────────────────────────────────────── */
-// ✅ No hardcoded credentials — authenticates against Django /api/login/
-function LoginPage({ onLogin, onForgot }) {
-  const [user, setUser]     = useState("");
-  const [pass, setPass]     = useState("");
-  const [showPw, setShowPw] = useState(false);
-  const [err, setErr]       = useState("");
-  const [loading, setLoading] = useState(false);
-
-  async function doLogin() {
-    if (!user || !pass) { setErr("Please enter your username and password."); return; }
-    setLoading(true);
-    setErr("");
-    try {
-      const res = await fetch(`${API_BASE}/login/`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: user, password: pass }),
-      });
-      if (!res.ok) { setErr("Incorrect username or password. Please try again."); return; }
-      const data = await res.json();
-      onLogin(data.token, data.display);
-    } catch {
-      setErr("Cannot connect to server. Make sure Django is running.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  return (
-    <div className="auth-wrap">
-      <div className="auth-card">
-        <div className="auth-header">
-          <div className="auth-brand-icon"><FlameIcon /></div>
-          <h1>FIRS — Fire Incident Recording System</h1>
-          <p>Bureau of Fire Protection · Cagayan de Oro City</p>
-        </div>
-        <div className="auth-body">
-          <h2>Sign In</h2>
-          <p className="auth-sub">Enter your BFP credentials to access the system.</p>
-          {err && <div className="auth-err">{err}</div>}
-          <div className="auth-fg">
-            <label>Username</label>
-            <input type="text" placeholder="Enter your username" value={user}
-              onChange={e => setUser(e.target.value)} autoComplete="username"
-              onKeyDown={e => e.key === "Enter" && doLogin()} />
-          </div>
-          <div className="auth-fg pw">
-            <label>Password</label>
-            <input type={showPw ? "text" : "password"} placeholder="Enter your password" value={pass}
-              onChange={e => setPass(e.target.value)} autoComplete="current-password"
-              onKeyDown={e => e.key === "Enter" && doLogin()} />
-            <button className="pw-toggle" onClick={() => setShowPw(!showPw)} type="button" tabIndex={-1}>
-              {showPw ? <EyeOffIcon /> : <EyeIcon />}
-            </button>
-          </div>
-          <div className="auth-row">
-            <label><input type="checkbox" /> Remember me</label>
-            <button className="auth-link" onClick={onForgot}>Forgot password?</button>
-          </div>
-          <button className="auth-btn" onClick={doLogin} disabled={loading}>
-            {loading ? "Signing in…" : "Sign In"}
-          </button>
-        </div>
-        <div className="auth-footer">
-          Manage accounts via Django Admin at <strong>localhost:8000/admin</strong>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ─── FORGOT PASSWORD PAGE ────────────────────────────────────────────────── */
-function ForgotPage({ onBack }) {
-  const [email, setEmail] = useState("");
-  const [user, setUser]   = useState("");
-  const [err, setErr]     = useState("");
-  const [sent, setSent]   = useState(false);
-
-  function doForgot() {
-    setErr("");
-    if (!email || !user) { setErr("Please fill in both fields."); return; }
-    setSent(true);
-  }
-
-  return (
-    <div className="auth-wrap">
-      <div className="auth-card">
-        <div className="auth-header">
-          <div className="auth-brand-icon"><FlameIcon /></div>
-          <h1>FIRS — Fire Incident Recording System</h1>
-          <p>Bureau of Fire Protection · Cagayan de Oro City</p>
-        </div>
-        <div className="auth-body">
-          <button className="auth-back" onClick={onBack}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
-            Back to Sign In
-          </button>
-          <h2>Reset Password</h2>
-          <p className="auth-sub">Contact your BFP system administrator to reset your password via Django Admin.</p>
-          {err && <div className="auth-err">{err}</div>}
-          {sent && <div className="auth-success">Request submitted. Please contact your administrator.</div>}
-          <div style={sent ? {opacity:.4,pointerEvents:"none"} : {}}>
-            <div className="auth-fg">
-              <label>Email Address</label>
-              <input type="email" placeholder="Enter your registered email" value={email} onChange={e => setEmail(e.target.value)} />
-            </div>
-            <div className="auth-fg">
-              <label>Username</label>
-              <input type="text" placeholder="Enter your username" value={user} onChange={e => setUser(e.target.value)} onKeyDown={e => e.key === "Enter" && doForgot()} />
-            </div>
-            <button className="auth-btn" style={{marginTop:10}} onClick={doForgot}>Send Reset Request</button>
-          </div>
-        </div>
-        <div className="auth-footer">Contact your BFP system administrator if you need further assistance.</div>
-      </div>
-    </div>
-  );
-}
 
 /* ─── INCIDENT MODAL ──────────────────────────────────────────────────────── */
 function IncidentModal({ open, editRec, onClose, onSave }) {
